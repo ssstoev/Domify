@@ -3,6 +3,7 @@ from bs4 import BeautifulSoup
 import chardet # for the encoding
 import re
 import pandas as pd
+import datetime as dt
 
 # Function to fetch and decode webpage content
 def fetch_webpage(url):
@@ -54,7 +55,7 @@ base_url = 'https://www.imoti.net/bg/obiavi/r/prodava/sofia/?page=1&sid=gSoWpd' 
 
 total_pages = 357
 
-real_estate_data = {} # here we are going to store the books information from each page
+real_estate_data = {} # we will store the real estate data from all pages in this dictionary
 
 for page_number in range(1, total_pages + 1):
     the_url = f'https://www.imoti.net/bg/obiavi/r/prodava/sofia/?page={page_number}&sid=gSoWpd'# + str(page_number)
@@ -66,7 +67,7 @@ for page_number in range(1, total_pages + 1):
 df = pd.DataFrame.from_dict(real_estate_data, orient='index')
 df.index.name = 'Real Estate Name'
 df.reset_index(inplace=True)
-df.to_excel(f'real_estate_sofia_{total_pages}_pages.xlsx', index=False)
+df.to_excel(f'real_estate_sofia_{total_pages}_pages_{dt.datetime.now().strftime("%Y-%m-%d-%H-%M-%S")}.xlsx', index=False)
 
 print(f'Done. Real estate information from all {total_pages} pages are downloaded')
 
