@@ -112,7 +112,7 @@ def scrape_single_page(url: str):
 def run_harvester():
     '''Extract main ad info from all pages & insert into db'''
     # 1. Connect to DB
-    conn = sqlite3.connect('data/ads_storage.db')
+    conn = sqlite3.connect('scraper/data/ads_storage.db')
     cursor = conn.cursor() # MUST define this
     
     page_number = 1

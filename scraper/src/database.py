@@ -1,8 +1,14 @@
 import sqlite3
 import datetime as dt
 
-def init_db(db_path='data/ads_storage.db'):
-    conn = sqlite3.connect(db_path)
+def init_db(db_path='scraper/data/ads_storage.db'):
+    conn = sqlite3.connect(db_path, timeout=10)
+    conn.isolation_level = None  # Autocommit mode to avoid locks
+    try:
+        conn.execute("PRAGMA journal_mode=WAL")  # Enable WAL for concurrent access
+    except sqlite3.OperationalError:
+        pass  # WAL already set or can't be set, continue anyway
+    conn.isolation_level = ""  # Reset to default
     cursor = conn.cursor()
     
     # Create the table if it doesn't exist
@@ -51,7 +57,46 @@ def insert_ad(cursor, ad_data):
 
         # print(f"Successfully inserted item {hash_id}")
 
-def fetch_pending_ads(): 
+def fetch_pending_ads(conn, batch_size=100):
+    cursor = conn.cursor()
+    cursor.execute("BEGIN IMMEDIATE")
     query = '''
-    SELECT * FROM ads_raw WHERE status = "pending"
-'''
+    SELECT * FROM ads_raw WHERE status = "pending" LIMIT ?
+    '''
+    cursor.execute(query, (batch_size,))
+
+    pending = cursor.fetchall()
+    pending_list = [{"hash_id": row[0], "link": row[1]} for row in pending]
+
+    # Or if you want column names from cursor.description
+    columns = [desc[0] for desc in cursor.description]
+    pending_list = [dict(zip(columns, row)) for row in pending]
+    
+    cursor.executemany("""
+        UPDATE ads_raw
+        SET status = 'processing'
+        WHERE hash_id = ?
+    """, [(ad["hash_id"],) for ad in pending_list])
+
+    conn.commit()
+    return pending_list
+
+def update_records(conn, updates):
+    cursor = conn.cursor()
+
+    for update in updates:
+        cursor.execute("""
+            UPDATE ads_raw 
+            SET description = ?, price_m2_eur = ?, price_m2_bgn = ?,
+                       size_m2 = ?, floor = ?, akt16 = ?, energy_class = ?,
+                       potreblenie = ?, broker_commision = ?, additional_notes = ?,
+                       status = 'done', last_updated = ?
+            WHERE hash_id = ?
+        """, 
+            (update["description"], update["price_m2_eur"], update["price_m2_bgn"],
+              update["size_m2"], update["floor"], update["akt16"], update["energy_class"],
+               update["potreblenie"], update["broker_commision"], update["additional_notes"],
+               dt.datetime.now(), update["hash_id"])
+        )
+    conn.commit()
+    return None
