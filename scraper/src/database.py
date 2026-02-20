@@ -61,7 +61,7 @@ def fetch_pending_ads(conn, batch_size=100):
     cursor = conn.cursor()
     cursor.execute("BEGIN IMMEDIATE")
     query = '''
-    SELECT * FROM ads_raw WHERE status = "pending" LIMIT ?
+    SELECT * FROM ads_raw WHERE status IN ("pending", "processing") LIMIT ?
     '''
     cursor.execute(query, (batch_size,))
 
@@ -100,3 +100,51 @@ def update_records(conn, updates):
         )
     conn.commit()
     return None
+
+## We missed extracting data for 1 column so we will backfill it without scraping everything again from scratch
+
+def create_missing_col(new_db_col_name: str, db_path='scraper/data/ads_storage.db'): 
+    conn = sqlite3.connect(db_path)
+    cursor = conn.cursor()
+    query_create_col = f'''
+        ALTER TABLE ads_raw ADD COLUMN {new_db_col_name} TEXT
+    '''
+    cursor.execute(query_create_col)
+    conn.commit()
+    conn.close()
+
+def fetch_missing_extras_rows(conn, batch_size=20):
+    '''This funciton fetches the rows where the extras column is NULL'''
+
+    cursor = conn.cursor()
+    cursor.execute("BEGIN IMMEDIATE")
+    query = '''
+    SELECT hash_id, link FROM ads_raw WHERE extras is NULL LIMIT ?
+    '''
+    cursor.execute(query, (batch_size,))
+
+    extras = cursor.fetchall()
+    extras_list = [{"hash_id": row[0], "link": row[1]} for row in extras]
+
+    return extras_list
+
+def add_missing_col_information(conn, 
+                                db_col_to_update: str, 
+                                updates: dict, 
+                                values_to_update_with:str):
+    
+    '''Add the additional scraped info to the col'''
+    cursor = conn.cursor()
+
+    query_update_col = f'''
+        UPDATE ads_raw
+        SET {db_col_to_update} = ?
+        WHERE hash_id = ?    
+    '''
+
+    for update in updates:
+        cursor.execute(query_update_col, 
+                       (update[f"{values_to_update_with}"], update["hash_id"]))
+    
+    conn.commit()
+    conn.close()

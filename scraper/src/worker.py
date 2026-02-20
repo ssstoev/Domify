@@ -7,7 +7,7 @@ import pandas as pd
 import datetime as dt
 import time
 
-from src.database import fetch_pending_ads, update_records
+from src.database import add_missing_col_information, fetch_missing_extras_rows, fetch_pending_ads, update_records
 
 def normalize_fields(scraped_data):
     """Map Bulgarian HTML field names to database column names"""
@@ -32,7 +32,7 @@ def normalize_fields(scraped_data):
     
     return normalized
 
-def run_worker(batch_size=100):
+def run_worker(batch_size=20):
     while True:
         # 1. Connect to DB for reading
         conn = sqlite3.connect('scraper/data/ads_storage.db')
@@ -120,77 +120,60 @@ def run_worker(batch_size=100):
             write_conn.execute("PRAGMA busy_timeout = 30000")
             update_records(write_conn, updates)
             write_conn.close()
+        
+        print(f"updated new batch of {batch_size} recrods")
     return None
 
-
-
-
-
-
-# # Function to fetch and decode webpage content
-# def fetch_webpage(url):
-#     # Fetch the webpage
-#     response = requests.get(url)
-
-#     # Detect the encoding of the content
-#     detected_encoding = chardet.detect(response.content)['encoding']
-    
-#     # Decode the content using the detected encoding
-#     if detected_encoding:
-#         content = response.content.decode(detected_encoding)
-#     else:
-#         # Fallback to UTF-8 if encoding detection fails
-#         content = response.content.decode('utf-8', errors='ignore')
-
-#     # html_content = response.text
-#     soup = BeautifulSoup(content, 'html.parser')
-
-#     # here each real estate post is stored
-#     title_wrappers = soup.find_all('div', class_ = 'real-estate-text')
-#     real_estate_dict = {}
-
-#     for real_estate in title_wrappers:
-#         offer_type = real_estate.find("h3").find("span", class_="re-offer-type").get_text(strip=True)
-#         estate_type = real_estate.find("h3").get_text(strip=True).replace(offer_type, '').strip()
-#         location = real_estate.find("span", class_="location").get_text(strip=True)
-#         price = real_estate.find("strong", class_="price").get_text(strip=True).replace("EUR", " EUR").strip()
+def backfill_new_column(batch_size=20):
+    total_updated_count = 0
+    while True:
+        # 1. Connect to DB for reading
+        conn = sqlite3.connect('scraper/data/ads_storage.db')
+        conn.execute("PRAGMA busy_timeout = 10000")  # 10 second timeout
         
-#         # Extract size from the estate_type using regex
-#         size_match = re.search(r'(\d+\s)', str(real_estate.find("h3")))
-#         size = size_match.group(1) if size_match else "N/A"
+        # get the urls of the empty values
+        print("fetching the batch... ")
+        extras_list = fetch_missing_extras_rows(conn)
+        print(f"fetched the hash_ids of the missing cols: {len(extras_list)}")
+        conn.close()
 
-#         real_estate_dict[estate_type] = {'Location': location, 'Price (EUR)': price, 'Size (m2)': size}
+        # if there're no left missing extras
+        if len(extras_list) == 0:
+            break
 
-#         # for key, value in real_estate_dict.items():
-#             # print(f"Size: {estate['Size (m2)']}")
-#             # print(f"Price: {estate['Price (EUR)']}")
-#             # print(f"Location: {estate['Location']}")
-#             # print()
-#             # print(f"{key}: {value}")
-#             # print()
+        # for each item in the extras_list scrape the data and add it to the db
+        try:
+            updates = []
+            for item in extras_list:
+                print(f"Scraping info for item {item["hash_id"]}..")
+                response = requests.get(item["link"])
+                print(f"Scraped the info for item {item["hash_id"]}")
 
-#     # print(real_estate_dict)
-#     return real_estate_dict
+                soup = BeautifulSoup(response.content, "html.parser")
+                result = soup.find("ul", class_="extras")
+                li_items = result.find_all('li') if result else []
 
-# # URL of the webpage you want to scrape
-# base_url = 'https://www.imoti.net/bg/obiavi/r/prodava/sofia/?page=1&sid=gSoWpd'  # Replace with the actual URL
+                update_dict = {
+                    "hash_id": item["hash_id"],
+                    "extras": "; ".join([li.get_text(strip=True) for li in li_items]) if li_items else "EMPTY"
+                    }
+                
+                updates.append(update_dict)
+            print("scraping of batch finished")
+        except Exception as e:
+            print(e)
 
-# total_pages = 357
+        if updates:
+            # time.sleep(0.5)  # Increase delay to ensure lock is released
+            write_conn = sqlite3.connect('scraper/data/ads_storage.db', timeout=30)
+            write_conn.execute("PRAGMA busy_timeout = 30000")
+            print("updating the DB with new info...")
+            add_missing_col_information(write_conn, "extras", updates, "extras")
+            write_conn.close()
+        
+        total_updated_count += batch_size
+        print(f"updated a total of {total_updated_count} records")
 
-# real_estate_data = {} # we will store the real estate data from all pages in this dictionary
-
-# for page_number in range(1, total_pages + 1):
-#     the_url = f'https://www.imoti.net/bg/obiavi/r/prodava/sofia/?page={page_number}&sid=gSoWpd'# + str(page_number)
-#     current_page_real_estate_data = fetch_webpage(the_url)
-#     real_estate_data.update(current_page_real_estate_data)
-#     print(real_estate_data)
-
-# #we create a df from the bpage_real_estate_data dictionary 
-# df = pd.DataFrame.from_dict(real_estate_data, orient='index')
-# df.index.name = 'Real Estate Name'
-# df.reset_index(inplace=True)
-# df.to_excel(f'real_estate_sofia_{total_pages}_pages_{dt.datetime.now().strftime("%Y-%m-%d-%H-%M-%S")}.xlsx', index=False)
-
-# print(f'Done. Real estate information from all {total_pages} pages are downloaded')
+    return None
 
 
