@@ -1,10 +1,6 @@
 import sqlite3
 import requests
 from bs4 import BeautifulSoup
-import chardet # for the encoding
-import re
-import pandas as pd
-import datetime as dt
 import time
 
 from src.database import add_missing_col_information, fetch_missing_extras_rows, fetch_pending_ads, update_records
@@ -93,7 +89,7 @@ def run_worker(batch_size=20):
 
                 # print(10*"=" + f"Finished with item {id}" + 10*"=")
                 ad_item = normalize_fields(ad_item)  # Convert field names
-
+                # WIP: Scrape the total price (add DB col before that)
                 update = {
                     "hash_id": ad_item["hash_id"],
                     "description": ad_item.get("description", ""),
@@ -121,7 +117,7 @@ def run_worker(batch_size=20):
             update_records(write_conn, updates)
             write_conn.close()
         
-        print(f"updated new batch of {batch_size} recrods")
+        print(f"updated new batch of {batch_size} records")
     return None
 
 def backfill_new_column(batch_size=20):

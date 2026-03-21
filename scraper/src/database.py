@@ -101,13 +101,14 @@ def update_records(conn, updates):
     conn.commit()
     return None
 
-## We missed extracting data for 1 column so we will backfill it without scraping everything again from scratch
+# We missed extracting data for 1 column so we will backfill it without scraping everything again from scratch
 
-def create_missing_col(new_db_col_name: str, db_path='scraper/data/ads_storage.db'): 
+def create_missing_col(table_name: str, new_db_col_name: str, db_path='scraper/data/ads_storage.db'): 
+    '''Add new column to a table in the RDBMS'''
     conn = sqlite3.connect(db_path)
     cursor = conn.cursor()
     query_create_col = f'''
-        ALTER TABLE ads_raw ADD COLUMN {new_db_col_name} TEXT
+        ALTER TABLE {table_name} ADD COLUMN {new_db_col_name} TEXT
     '''
     cursor.execute(query_create_col)
     conn.commit()

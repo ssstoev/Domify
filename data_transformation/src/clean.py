@@ -4,9 +4,11 @@ import _sqlite3
 import re
 
 def clean_data(conn: _sqlite3.Connection):
-    '''Clean the ads_raw table. 
-     - Convert fileds to numeric
+    '''
+    Clean the ads_raw table. 
+     - Convert fields to numeric
      - Convert fields to bool
+     - Create search_text col which is a combinaiton of search_text title + description + extras + price + size + floor
      '''
 
     # 1. Load into a pandas DF

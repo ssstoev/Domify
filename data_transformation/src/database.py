@@ -1,6 +1,6 @@
 import sqlite3
 
-def init_db(db_path='scraper/data/ads_storage.db'):
+def init_ads_cleaned_db(db_path='scraper/data/ads_storage.db'):
     conn = sqlite3.connect(db_path, timeout=10)
     conn.isolation_level = None  # Autocommit mode to avoid locks 
     try:
@@ -11,9 +11,9 @@ def init_db(db_path='scraper/data/ads_storage.db'):
     cursor = conn.cursor()
     
     # Drop and recreate to ensure schema is always up to date
-    cursor.execute("DROP TABLE IF EXISTS ads_cleaned")
+    # cursor.execute("DROP TABLE IF EXISTS ads_cleaned")
     cursor.execute("""
-        CREATE TABLE ads_cleaned (
+        CREATE TABLE IF NOT EXISTS ads_cleaned (
             hash_id VARCHAR(64) PRIMARY KEY,
             title VARCHAR(500),
             link VARCHAR(1000),
@@ -35,7 +35,7 @@ def init_db(db_path='scraper/data/ads_storage.db'):
     conn.commit()
     conn.close()
 
-def load_transformed_data(cleaned_dict, conn):
+def load_data_into_ads_cleaned(cleaned_dict, conn):
     # cleaned_dict = df.to_dict()
     # cleaned_data should be in format {"hash_id", "title", etc.}
     cursor = conn.cursor()
@@ -82,6 +82,36 @@ def load_transformed_data(cleaned_dict, conn):
             item["extras"]
         ))
     conn.commit()
-
-    conn.close()
     return None
+
+def query_entire_database_table(table_name: str, conn: sqlite3.Connection) -> list[dict]:
+    cursor = conn.cursor()
+    query = f'''
+            SELECT *
+            FROM {table_name}
+            '''
+    
+    cursor.execute(query)
+    columns = [desc[0] for desc in cursor.description]
+    rows = cursor.fetchall()
+
+    return [dict(zip(columns, row)) for row in rows]
+
+def add_price_column(conn):
+    '''Create and populate a total price column in ads_clean.
+     The column is derived from the size_m2 * price_m2_eur'''
+    cursor = conn.cursor()
+    
+    # query_create_column = '''
+    # ALTER TABLE ads_cleaned
+    # ADD COLUMN total_price_eur DECIMAL(10, 2);
+    # '''
+    # cursor.execute(query_create_column)
+    
+    query_populate_column = '''
+    UPDATE ads_cleaned
+    SET total_price_eur = COALESCE(price_m2_eur, 0) * COALESCE(size_m2, 0)
+    '''
+
+    cursor.execute(query_populate_column)
+    conn.commit()

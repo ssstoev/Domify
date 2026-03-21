@@ -1,9 +1,20 @@
 import pandas as pd
 import numpy as np
-import _sqlite3
 import re
 
+# WIP: add total_floors col/on last floor - yes/no
+# clean the description col from phone numbers and other noise signs
 def transform_data(df: pd.DataFrame):
+    '''
+    Does the following transformations:
+    1. Extracts the floor number from the floor column
+    2. Extract neiighbourhood name from title column
+    3. Extract the estate type - garage, land, shop, etc.
+    Args:
+        df (pd.DataFrame): dataframe
+    Returns:
+        cleaned_dict (dict): dictionary with transformed data    
+    '''
 
     # 1. Extract the floor number from the floor column
     df["floor"] = df["floor"].apply(extract_floor_number)
@@ -11,7 +22,7 @@ def transform_data(df: pd.DataFrame):
     # 2. Extract the neighbourhood from the title col
     df['neighbourhood'] = df['title'].str.extract(r'в София, \s*(.*)', expand=False)
 
-    # 6. Extract if its a garage or living building or area for building (parcel)
+    # 3. Extract if its a garage or living building or area for building (parcel)
     # "Гараж, паркомясто"; "Парцел"
     # we use a vectorized approach since it's fastest
     df["type_of_estate"] = np.select(
@@ -29,6 +40,7 @@ def transform_data(df: pd.DataFrame):
 
 # Helper funciton to extract floor number
 def extract_floor_number(floor_string: str):
+    '''Helper function to extract floor number'''
     if pd.isna(floor_string):
         return np.nan
     
