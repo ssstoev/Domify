@@ -59,6 +59,7 @@ def extract_floor_number(floor_string: str):
     return int(match.group()) if match else np.nan
 
 # Helper function to extract nr of rooms 
+# WIP: more professional to replace with mapping dict {"Ednostaen": 1, ...}
 def extract_number_of_rooms(text):
     if "Едностаен" in text:
         return 1
