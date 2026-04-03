@@ -19,9 +19,11 @@ def init_ads_cleaned_db(db_path='scraper/data/ads_storage.db'):
             link VARCHAR(1000),
             neighbourhood VARCHAR(255),
             type_of_estate VARCHAR(100),
+            total_price_eur DECIMAL(10, 2),
             price_m2_eur DECIMAL(10,2),
             price_m2_bgn DECIMAL(10,2),
             size_m2 DECIMAL(10,2),
+            nr_of_rooms SMALLINT,
             description TEXT,
             floor SMALLINT,
             akt16 BOOL,
@@ -34,10 +36,12 @@ def init_ads_cleaned_db(db_path='scraper/data/ads_storage.db'):
     """)
     conn.commit()
     conn.close()
+    print("Created ads_cleaned table!")
 
 def load_data_into_ads_cleaned(cleaned_dict, conn):
     # cleaned_dict = df.to_dict()
     # cleaned_data should be in format {"hash_id", "title", etc.}
+    print("Loading data into ads_cleaned...\n")
     cursor = conn.cursor()
     for item in cleaned_dict:
         print(f"updating item: {item["hash_id"]}")
@@ -48,9 +52,11 @@ def load_data_into_ads_cleaned(cleaned_dict, conn):
                 link,               
                 neighbourhood,
                 type_of_estate,
+                total_price_eur,
                 price_m2_eur,
                 price_m2_bgn,
                 size_m2,
+                nr_of_rooms,
                 description,
                 floor,
                 akt16,
@@ -59,7 +65,7 @@ def load_data_into_ads_cleaned(cleaned_dict, conn):
                 broker_commision,
                 additional_notes,
                 extras
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """
         
         # 2. Execute
@@ -69,9 +75,11 @@ def load_data_into_ads_cleaned(cleaned_dict, conn):
             item["link"],               
             item["neighbourhood"],
             item["type_of_estate"],
+            item["total_price_eur"],
             item["price_m2_eur"],
             item["price_m2_bgn"],
             item["size_m2"],
+            item["nr_of_rooms"],
             item["description"],
             item["floor"],
             item["akt16"],
@@ -82,6 +90,8 @@ def load_data_into_ads_cleaned(cleaned_dict, conn):
             item["extras"]
         ))
     conn.commit()
+    print("Finished loading data into ads_cleaned!\n")
+
     return None
 
 def query_entire_database_table(table_name: str, conn: sqlite3.Connection) -> list[dict]:
@@ -97,21 +107,27 @@ def query_entire_database_table(table_name: str, conn: sqlite3.Connection) -> li
 
     return [dict(zip(columns, row)) for row in rows]
 
-def add_price_column(conn):
-    '''Create and populate a total price column in ads_clean.
-     The column is derived from the size_m2 * price_m2_eur'''
+def rename_table(old_name: str, new_name: str, conn: sqlite3.Connection) -> None:
     cursor = conn.cursor()
-    
-    # query_create_column = '''
-    # ALTER TABLE ads_cleaned
-    # ADD COLUMN total_price_eur DECIMAL(10, 2);
-    # '''
-    # cursor.execute(query_create_column)
-    
-    query_populate_column = '''
-    UPDATE ads_cleaned
-    SET total_price_eur = COALESCE(price_m2_eur, 0) * COALESCE(size_m2, 0)
-    '''
-
-    cursor.execute(query_populate_column)
+    cursor.execute(f"ALTER TABLE {old_name} RENAME TO {new_name}")
     conn.commit()
+
+# def add_price_column(conn):
+#     '''Create and populate a total price column in ads_clean.
+#      The column is derived from the size_m2 * price_m2_eur'''
+#     cursor = conn.cursor()
+    
+#     # query_create_column = '''
+#     # ALTER TABLE ads_cleaned
+#     # ADD COLUMN total_price_eur DECIMAL(10, 2);
+#     # '''
+#     # cursor.execute(query_create_column)
+    
+#     query_populate_column = '''
+#     UPDATE ads_cleaned
+#     SET total_price_eur = COALESCE(price_m2_eur, 0) * COALESCE(size_m2, 0)
+#     '''
+
+#     cursor.execute(query_populate_column)
+#     conn.commit()
+

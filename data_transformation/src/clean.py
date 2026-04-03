@@ -11,6 +11,7 @@ def clean_data(conn: _sqlite3.Connection):
      - Create search_text col which is a combinaiton of search_text title + description + extras + price + size + floor
      '''
 
+    print("Begin cleaning... \n")
     # 1. Load into a pandas DF
     # Fetch all processed data
     cursor = conn.cursor()
@@ -38,6 +39,7 @@ def clean_data(conn: _sqlite3.Connection):
         # drop the old columns
         # df.drop(labels=col, axis=1, inplace=True)
 
+    print("Finished cleaning! \n")
     return df
 
 # Helper function to convert yes/no columns to bool
