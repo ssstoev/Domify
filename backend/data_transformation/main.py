@@ -5,7 +5,7 @@ import sqlite3
 
 def main():
     conn = sqlite3.connect("scraper/data/ads_storage.db")
-    # rename_table("ads_cleaned", "ads_cleaned_backup", conn)
+    rename_table("ads_cleaned", "ads_cleaned_backup", conn)
     print("Successfully renamed old ads_cleaned table to ads_cleaned_backup")
     init_ads_cleaned_db()
     df = clean_data(conn)

@@ -63,7 +63,7 @@ def extract_floor_number(floor_string: str):
 def extract_number_of_rooms(text):
     if "Едностаен" in text:
         return 1
-    elif "Двyстаен" in text:
+    elif "Двустаен" in text:
         return 2
     elif "Тристаен" in text:
         return 3

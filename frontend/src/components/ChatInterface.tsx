@@ -1,7 +1,8 @@
 import { useState, useRef, useEffect } from "react";
 import { Send, Sparkles, Building2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import ListingCard, { type Listing } from "./ListingCard";
+import ListingCard from "./ListingCard";
+import { Listing, searchListings } from "@/api/api";
 
 interface Message {
   id: string;
@@ -17,51 +18,6 @@ const SUGGESTED_QUERIES = [
   "What's the average price per m² in Centro?",
 ];
 
-const MOCK_LISTINGS: Listing[] = [
-  {
-    id: "1",
-    title: "Bright Studio Apartment with Terrace",
-    price: 78000,
-    currency: "EUR",
-    location: "Málaga",
-    neighborhood: "El Palo",
-    bedrooms: 1,
-    bathrooms: 1,
-    area: 45,
-    imageUrl: "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?w=400&h=300&fit=crop",
-    url: "#",
-    tags: ["Underpriced", "Near beach"],
-  },
-  {
-    id: "2",
-    title: "Renovated Flat in Historic Center",
-    price: 92000,
-    currency: "EUR",
-    location: "Málaga",
-    neighborhood: "Centro",
-    bedrooms: 2,
-    bathrooms: 1,
-    area: 62,
-    imageUrl: "https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=400&h=300&fit=crop",
-    url: "#",
-    tags: ["Recently renovated"],
-  },
-  {
-    id: "3",
-    title: "Cozy Ground Floor with Patio",
-    price: 85000,
-    currency: "EUR",
-    location: "Málaga",
-    neighborhood: "El Palo",
-    bedrooms: 2,
-    bathrooms: 1,
-    area: 55,
-    imageUrl: "https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=400&h=300&fit=crop",
-    url: "#",
-    tags: ["Garden", "Pet friendly"],
-  },
-];
-
 const ChatInterface = () => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
@@ -74,6 +30,7 @@ const ChatInterface = () => {
   }, [messages]);
 
   const handleSend = async (text?: string) => {
+    console.log("message sent")
     const messageText = text || input.trim();
     if (!messageText || isLoading) return;
 
@@ -87,17 +44,27 @@ const ChatInterface = () => {
     setInput("");
     setIsLoading(true);
 
-    // Simulate AI response with mock data
-    setTimeout(() => {
+    // Call the real search API
+    try {
+      const data = await searchListings(messageText);
       const assistantMessage: Message = {
         id: (Date.now() + 1).toString(),
         role: "assistant",
-        content: `I found **3 listings** matching your query in the area. Here are the best matches sorted by value:`,
-        listings: MOCK_LISTINGS,
+        content: `I found **${data.total} listings** matching your query. Here are the best matches sorted by relevance:`,
+        listings: data.results,
       };
       setMessages((prev) => [...prev, assistantMessage]);
+    } catch (err) {
+      console.log("Error:", err)
+      const errorMessage: Message = {
+        id: (Date.now() + 1).toString(),
+        role: "assistant",
+        content: "Sorry, something went wrong while searching. Please try again.",
+      };
+      setMessages((prev) => [...prev, errorMessage]);
+    } finally {
       setIsLoading(false);
-    }, 1200);
+    }
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -175,7 +142,7 @@ const ChatInterface = () => {
                 {message.listings && (
                   <div className="space-y-2">
                     {message.listings.map((listing) => (
-                      <ListingCard key={listing.id} listing={listing} />
+                      <ListingCard key={listing.hash_id} listing={listing} />
                     ))}
                   </div>
                 )}

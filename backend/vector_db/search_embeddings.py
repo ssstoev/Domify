@@ -1,9 +1,7 @@
-from embeddings import embed, client
+from vector_db.embeddings import embed, client
 from qdrant_client.models import Filter, FieldCondition, Range, MatchAny, MatchValue, HasIdCondition, NamedVector
 
-from embeddings import client
-
-def find_listings(query: str, hash_ids: list = None, top_k: int = 5):
+def search_vector_db(query: str, hash_ids: list = None, top_k: int = 5):
     query_vector = embed(query)
 
     filters = None
@@ -33,6 +31,6 @@ def find_listings(query: str, hash_ids: list = None, top_k: int = 5):
     return results.points
 
 # Example
-results = find_listings("Необзаведен апартамент в квартал Овча Купел", ["93e00b28728005ffbece0fb975f1d38678910fb796a7fd28b40fc97826e2e124", 
-                                                                        'f86956dd334888697e09f28acb103cf8c9dfa00f0bc5d6bec99a5fae51bc5751'])
-print(results)
+# results = search_vector_db("Необзаведен апартамент в квартал Овча Купел", ["93e00b28728005ffbece0fb975f1d38678910fb796a7fd28b40fc97826e2e124", 
+#                                                                         'f86956dd334888697e09f28acb103cf8c9dfa00f0bc5d6bec99a5fae51bc5751'])
+# print(results)

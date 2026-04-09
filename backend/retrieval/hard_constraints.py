@@ -44,8 +44,13 @@ def extract_hard_constraints(query: str) -> dict:
 
 # WIP: build upper & lower bounds for fields like price/size etc. and add a +10% range for prices/sizes
 # WIP: E.g. a query for a 40 m2 place should include up to 45 m2
-def filter_db_on_hard_constraints(conn: sqlite3.Connection, constraints_dict: dict):
+# WIP: create classes for types for constraints_dict & the hahs_ids list
+# WIP: Add neighbourhood to hard constraints
+def filter_db_on_hard_constraints(constraints_dict: dict) -> list:
+    '''Receives a constraints dictionary and returns all hash_ids which fall in the criteria'''
 
+    _DB_PATH = os.path.join(os.path.dirname(__file__), "..", "scraper", "data", "ads_storage.db")
+    conn = sqlite3.connect(_DB_PATH)
     base_query  = "SELECT hash_id FROM ads_cleaned"
     cursor = conn.cursor()
     # build a dynamic query
@@ -61,7 +66,7 @@ def filter_db_on_hard_constraints(conn: sqlite3.Connection, constraints_dict: di
             params[field] = constraints_dict[field]
 
     # Upper bound fields — user wants at most this value
-    lte_fields = ["price_total_eur", "size_m2", "price_m2_eur"]
+    lte_fields = ["total_price_eur", "size_m2", "price_m2_eur"]
     for field in lte_fields:
         if constraints_dict.get(field) is not None:
             where_clauses.append(f"{field} <= :{field}")
@@ -78,10 +83,7 @@ def filter_db_on_hard_constraints(conn: sqlite3.Connection, constraints_dict: di
     print(results)
     return [row[0] for row in results]
 
-_DB_PATH = os.path.join(os.path.dirname(__file__), "..", "scraper", "data", "ads_storage.db")
-conn = sqlite3.connect(_DB_PATH)
-
-query = "Търся 35000EUR (40 кв)"
-constraints_dict = extract_hard_constraints(query)
-print(constraints_dict)
-print(filter_db_on_hard_constraints(conn, constraints_dict))
+# query = "Търся 35000EUR (40 кв)"
+# constraints_dict = extract_hard_constraints(query)
+# print(constraints_dict)
+# print(filter_db_on_hard_constraints(constraints_dict))
