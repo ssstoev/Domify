@@ -5,9 +5,13 @@ import sqlite3
 PROPERTY_TYPE_ROOMS = {
     'гарсониера': 1,
     'едностаен': 1,
+    'едностайни': 1,
     'двустаен': 2,
+    'двустайни': 2,
     'тристаен': 3,
+    'тристайни': 3,
     'многостаен': 4,
+    'многостайни':4
 }
 
 def extract_hard_constraints(query: str) -> dict:
@@ -24,7 +28,7 @@ def extract_hard_constraints(query: str) -> dict:
     price_m2_regex = r'(\d{3,5})\s*(€|eur|лв|bgn)?\s*/\s*(m2|м2)'
     floor_regex = r'(\d+)(?:-?(?:ви|ри|ти|и))?\s*(?:(?:от|/)\s*(\d+))?\s*(етаж|floor)'
     size_regex = r'(\d+(?:[\.,]\d+)?)\s*(кв\.?м?|m2|sqm)'
-    property_type_regex = r'(едностаен|двустаен|тристаен|многостаен|гарсониера)'
+    property_type_regex = r'(едностаен|двустаен|тристаен|многостаен|гарсониера|едностайни|двустайни|тристайни|многостайни)'
 
     price_match = re.search(price_regex, query)
     price_m2_match = re.search(price_m2_regex, query)

@@ -12,10 +12,10 @@ interface Message {
 }
 
 const SUGGESTED_QUERIES = [
-  "Show apartments under €100k in Old Town",
-  "Find 3-bedroom houses near the coast",
-  "Is this listing underpriced compared to neighbors?",
-  "What's the average price per m² in Centro?",
+  "Покажи ми двустайни апартаменти под 2500eur/m2",
+  "Намери ми тристайни до 300000EUR",
+  "Намери ми двустаен до 180000EUR близо до метро",
+  "Kаква е средната цена на двустайни апартаменти в София?",
 ];
 
 const ChatInterface = () => {
@@ -82,7 +82,7 @@ const ChatInterface = () => {
           <Building2 className="h-5 w-5 text-primary-foreground" />
         </div>
         <div>
-          <h1 className="text-lg font-semibold text-foreground">EstateQuery</h1>
+          <h1 className="text-lg font-semibold text-foreground">ImotQuery</h1>
           <p className="text-xs text-muted-foreground">
             AI-powered real estate search
           </p>
