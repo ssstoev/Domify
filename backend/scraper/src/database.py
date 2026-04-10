@@ -1,7 +1,10 @@
 import sqlite3
 import datetime as dt
+import os
 
-def init_db(db_path='scraper/data/ads_storage.db'):
+_DEFAULT_DB_PATH = os.path.join(os.path.dirname(__file__), '..', 'data', 'ads_storage.db')
+
+def init_db(db_path=_DEFAULT_DB_PATH):
     conn = sqlite3.connect(db_path, timeout=10)
     conn.isolation_level = None  # Autocommit mode to avoid locks
     try:
@@ -103,36 +106,36 @@ def update_records(conn, updates):
 
 # We missed extracting data for 1 column so we will backfill it without scraping everything again from scratch
 
-def create_missing_col(table_name: str, new_db_col_name: str, db_path='scraper/data/ads_storage.db'): 
+def create_missing_col(table_name: str, new_db_col_name: str, dtype: str = "TEXT", db_path=_DEFAULT_DB_PATH): 
     '''Add new column to a table in the RDBMS'''
     conn = sqlite3.connect(db_path)
     cursor = conn.cursor()
     query_create_col = f'''
-        ALTER TABLE {table_name} ADD COLUMN {new_db_col_name} TEXT
+        ALTER TABLE {table_name} ADD COLUMN {new_db_col_name} {dtype}
     '''
     cursor.execute(query_create_col)
     conn.commit()
     conn.close()
 
-def fetch_missing_extras_rows(conn, batch_size=20):
-    '''This funciton fetches the rows where the extras column is NULL'''
+def fetch_missing_rows(conn, col_to_check: str, batch_size=20):
+    '''This funciton fetches the rows where the a specified column is NULL'''
 
     cursor = conn.cursor()
     cursor.execute("BEGIN IMMEDIATE")
-    query = '''
-    SELECT hash_id, link FROM ads_raw WHERE extras is NULL LIMIT ?
+    query = f'''
+    SELECT hash_id, link FROM ads_raw WHERE {col_to_check} is NULL LIMIT ?
     '''
     cursor.execute(query, (batch_size,))
 
-    extras = cursor.fetchall()
-    extras_list = [{"hash_id": row[0], "link": row[1]} for row in extras]
+    result = cursor.fetchall()
+    result_list = [{"hash_id": row[0], "link": row[1]} for row in result]
 
-    return extras_list
+    return result_list
 
-def add_missing_col_information(conn, 
+def add_missing_col_information(conn: sqlite3.Connection, 
                                 db_col_to_update: str, 
                                 updates: dict, 
-                                values_to_update_with:str):
+                                values_to_update_with: str):
     
     '''Add the additional scraped info to the col'''
     cursor = conn.cursor()

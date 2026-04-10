@@ -12,7 +12,7 @@ from vector_db.embeddings import embed_ads_data
 
 def main():
     print("Begin embedding of ads...")
-    conn = sqlite3.connect("scraper/data/ads_storage.db")
+    conn = sqlite3.connect(os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'scraper', 'data', 'ads_storage.db'))
     listings_data = query_entire_database_table('ads_cleaned', conn)
     conn.close()
     embed_ads_data(listings_data)

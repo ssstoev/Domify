@@ -2,8 +2,11 @@ import sqlite3
 import requests
 from bs4 import BeautifulSoup
 import time
+import os
 
-from src.database import add_missing_col_information, fetch_missing_extras_rows, fetch_pending_ads, update_records
+_DB_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'data', 'ads_storage.db')
+
+from scraper.src.database import add_missing_col_information, fetch_missing_rows, fetch_pending_ads, update_records
 
 def normalize_fields(scraped_data):
     """Map Bulgarian HTML field names to database column names"""
@@ -31,7 +34,7 @@ def normalize_fields(scraped_data):
 def run_worker(batch_size=20):
     while True:
         # 1. Connect to DB for reading
-        conn = sqlite3.connect('scraper/data/ads_storage.db')
+        conn = sqlite3.connect(_DB_PATH)
         conn.execute("PRAGMA busy_timeout = 10000")  # 10 second timeout
 
         cursor = conn.cursor()
@@ -49,7 +52,6 @@ def run_worker(batch_size=20):
             item_response = requests.get(ad_item['link'])
             item_soup = BeautifulSoup(item_response.text, "html.parser")
             
-            # print(10*"=" + "Parsing the HTML..." + 10*"=")
             # grab the sidebar with descrtiptions (single element)
             try:
                 aside_info = item_soup.find("aside", class_="info-sidebar")
@@ -112,7 +114,7 @@ def run_worker(batch_size=20):
         # Batch update all records once - open NEW connection for writing
         if updates:
             time.sleep(0.5)  # Increase delay to ensure lock is released
-            write_conn = sqlite3.connect('scraper/data/ads_storage.db', timeout=30)
+            write_conn = sqlite3.connect(_DB_PATH, timeout=30)
             write_conn.execute("PRAGMA busy_timeout = 30000")
             update_records(write_conn, updates)
             write_conn.close()
@@ -124,12 +126,12 @@ def backfill_new_column(batch_size=20):
     total_updated_count = 0
     while True:
         # 1. Connect to DB for reading
-        conn = sqlite3.connect('scraper/data/ads_storage.db')
+        conn = sqlite3.connect(_DB_PATH)
         conn.execute("PRAGMA busy_timeout = 10000")  # 10 second timeout
         
         # get the urls of the empty values
         print("fetching the batch... ")
-        extras_list = fetch_missing_extras_rows(conn)
+        extras_list = fetch_missing_rows(conn, "extras")
         print(f"fetched the hash_ids of the missing cols: {len(extras_list)}")
         conn.close()
 
@@ -161,10 +163,61 @@ def backfill_new_column(batch_size=20):
 
         if updates:
             # time.sleep(0.5)  # Increase delay to ensure lock is released
-            write_conn = sqlite3.connect('scraper/data/ads_storage.db', timeout=30)
+            write_conn = sqlite3.connect(_DB_PATH, timeout=30)
             write_conn.execute("PRAGMA busy_timeout = 30000")
             print("updating the DB with new info...")
             add_missing_col_information(write_conn, "extras", updates, "extras")
+            write_conn.close()
+        
+        total_updated_count += batch_size
+        print(f"updated a total of {total_updated_count} records")
+
+    return None
+
+def backfill_imgurl_column(batch_size=20):
+    total_updated_count = 0
+    while True:
+        # 1. Connect to DB for reading
+        conn = sqlite3.connect(_DB_PATH)
+        conn.execute("PRAGMA busy_timeout = 10000")  # 10 second timeout
+        
+        # get the urls of the empty values
+        print("fetching the batch... ")
+        result_list = fetch_missing_rows(conn, "imgUrl")
+        print(f"fetched the hash_ids of the missing cols: {len(result_list)}")
+        conn.close()
+
+        # if there're no left missing extras
+        if len(result_list) == 0:
+            break
+
+        # for each item in the result_list scrape the data and add it to the db
+        try:
+            updates = []
+            for item in result_list:
+                print(f"Scraping info for item {item["hash_id"]}..")
+                response = requests.get(item["link"])
+                print(f"Scraped the info for item {item["hash_id"]}")
+
+                soup = BeautifulSoup(response.content, "html.parser")
+                result = soup.find("img", class_="src")
+
+                update_dict = {
+                    "hash_id": item["hash_id"],
+                    "imgUrl": result if result else "EMPTY"
+                    }
+                
+                updates.append(update_dict)
+            print("scraping of batch finished")
+        except Exception as e:
+            print(e)
+
+        if updates:
+            # time.sleep(0.5)  # Increase delay to ensure lock is released
+            write_conn = sqlite3.connect(_DB_PATH, timeout=30)
+            write_conn.execute("PRAGMA busy_timeout = 30000")
+            print("updating the DB with new info...")
+            add_missing_col_information(write_conn, "imgUrl", updates, "imgUrl")
             write_conn.close()
         
         total_updated_count += batch_size

@@ -1,4 +1,5 @@
 import sqlite3
+import os 
 
 def init_ads_cleaned_db(db_path='scraper/data/ads_storage.db'):
     conn = sqlite3.connect(db_path, timeout=10)
@@ -16,6 +17,7 @@ def init_ads_cleaned_db(db_path='scraper/data/ads_storage.db'):
         CREATE TABLE IF NOT EXISTS ads_cleaned (
             hash_id VARCHAR(64) PRIMARY KEY,
             title VARCHAR(500),
+            imgUrl VARCHAR(1000),
             link VARCHAR(1000),
             neighbourhood VARCHAR(255),
             type_of_estate VARCHAR(100),
@@ -49,6 +51,7 @@ def load_data_into_ads_cleaned(cleaned_dict, conn):
             INSERT OR IGNORE INTO ads_cleaned (
                 hash_id,
                 title,
+                imgUrl,
                 link,               
                 neighbourhood,
                 type_of_estate,
@@ -65,13 +68,14 @@ def load_data_into_ads_cleaned(cleaned_dict, conn):
                 broker_commision,
                 additional_notes,
                 extras
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """
         
         # 2. Execute
         cursor.execute(query, (
             item["hash_id"],
             item["title"],
+            item["imgUrl"],
             item["link"],               
             item["neighbourhood"],
             item["type_of_estate"],
@@ -131,3 +135,31 @@ def rename_table(old_name: str, new_name: str, conn: sqlite3.Connection) -> None
 #     cursor.execute(query_populate_column)
 #     conn.commit()
 
+def fetch_metadata_from_rdbms(candidate_ids: list):
+    '''Fetch the link & image URL from the RDBMS'''
+    # Connect to RDBMS
+    print("trying to connect")
+    _DB_PATH = os.path.join(os.path.dirname(__file__), "..", "..", "scraper", "data", "ads_storage.db")
+    conn = sqlite3.connect(_DB_PATH)
+    cursor = conn.cursor()
+    print("conncted to db!")
+    placeholders = ",".join(["?"] * len(candidate_ids))
+
+    query = f"""
+        SELECT hash_id, link, imgUrl
+        FROM ads_cleaned
+        WHERE hash_id IN ({placeholders})
+    """
+
+    cursor.execute(query, candidate_ids)
+    rows = cursor.fetchall()
+    print("query executed")
+    sql_data = {
+        row[0]: {
+            "link": row[1],
+            "imgUrl": row[2]
+        }
+        for row in rows
+    }
+    print("converted to dict")
+    return sql_data

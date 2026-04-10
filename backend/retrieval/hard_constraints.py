@@ -86,8 +86,3 @@ def filter_db_on_hard_constraints(constraints_dict: dict) -> list:
     results = cursor.execute(full_query, params)
     print(results)
     return [row[0] for row in results]
-
-# query = "Търся 35000EUR (40 кв)"
-# constraints_dict = extract_hard_constraints(query)
-# print(constraints_dict)
-# print(filter_db_on_hard_constraints(constraints_dict))

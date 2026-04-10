@@ -76,15 +76,17 @@ def embed_ads_data(data_to_embed: list[dict]):
             id=str(uuid.uuid4()),
             vector=vector,
             payload={                  # store metadata for filtering + display
-            "Hash_id": listing["hash_id"],
-            "Title": listing['title'],
-            "Neighbourhood": listing['neighbourhood'],
-            "Price (EUR)": listing['total_price_eur'],
-            "Price per m2": f"{listing['price_m2_eur']}",
-            "Size": f"{listing['size_m2']}" ,
-            "Floor": listing["floor"],
-            "Akt16": listing["akt16"],
-            "Description": f"{listing['description'], listing["extras"]}"
+                "Hash_id": listing["hash_id"],
+                "url": listing["url"],
+                "Title": listing['title'],
+                "Neighbourhood": listing['neighbourhood'],
+                "Price (EUR)": listing['total_price_eur'],
+                "Price per m2": f"{listing['price_m2_eur']}",
+                "nr of rooms": listing["nr_of_rooms"],
+                "Size": f"{listing['size_m2']}" ,
+                "Floor": listing["floor"],
+                "Akt16": listing["akt16"],
+                "Description": f"{listing['description'], listing["extras"]}"
             }
         ))
         batch_count += 1

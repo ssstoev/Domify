@@ -7,6 +7,8 @@ export interface Listing {
     size_m2: string;
     neighbourhood: string;
     score: number;
+    imageUrl: string;
+    link: string
 }
 
 export interface SearchResponse {
@@ -14,7 +16,7 @@ export interface SearchResponse {
     total: number;
 }
 
-export async function searchListings(query: string, topK: number = 5): Promise<SearchResponse> {
+export async function searchListings(query: string, topK: number = 10): Promise<SearchResponse> {
     console.log("Calling API...")
     const response = await fetch(`${API_BASE}/search`, {
         method: "POST",
@@ -23,8 +25,6 @@ export async function searchListings(query: string, topK: number = 5): Promise<S
     });
 
     if (!response.ok) throw new Error("Search failed");
-
-    // console.log(`API call finished! \n Data: ${response.json()}`)
 
     return response.json();
 }

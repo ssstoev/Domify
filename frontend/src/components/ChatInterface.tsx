@@ -50,7 +50,7 @@ const ChatInterface = () => {
       const assistantMessage: Message = {
         id: (Date.now() + 1).toString(),
         role: "assistant",
-        content: `I found **${data.total} listings** matching your query. Here are the best matches sorted by relevance:`,
+        content: `I found ** ${data.total} listings** matching your query. Here are the best matches sorted by relevance:`,
         listings: data.results,
       };
       setMessages((prev) => [...prev, assistantMessage]);
@@ -145,7 +145,7 @@ const ChatInterface = () => {
                       <ListingCard key={listing.hash_id} listing={listing} />
                     ))}
                   </div>
-                )}
+                )}                
               </div>
             </div>
           ))}

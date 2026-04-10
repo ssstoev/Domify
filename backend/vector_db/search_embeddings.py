@@ -1,7 +1,7 @@
 from vector_db.embeddings import embed, client
 from qdrant_client.models import Filter, FieldCondition, Range, MatchAny, MatchValue, HasIdCondition, NamedVector
 
-def search_vector_db(query: str, hash_ids: list = None, top_k: int = 5):
+def search_vector_db(query: str, hash_ids: list = None, top_k: int = 100):
     query_vector = embed(query)
 
     filters = None

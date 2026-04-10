@@ -2,7 +2,10 @@ import requests
 from bs4 import BeautifulSoup
 import chardet
 import sqlite3
-import time 
+import time
+import os
+
+_DB_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'data', 'ads_storage.db')
 import random
 
 from src.database import insert_ad
@@ -42,7 +45,7 @@ def scrape_single_page(url: str):
         url (str): the url of the first page
     
     Returns:
-        ads_dict (dict): Dicitonary with all the ads from the page
+        ads_dict (dict): Dicitonary with all the ads info from the page
     '''
     response = requests.get(url)
     # Detect the encoding of the content
@@ -78,41 +81,10 @@ def scrape_single_page(url: str):
     
     return ads_dict
 
-# def run_harvester():
-#     '''Extract main ad info from all pages & insert the main info into a db'''
-#     # 1. Connect to DB
-#     conn = sqlite3.connect('data/ads_storage.db')
-#     cursor = conn.cursor()
-#     page_number = 1
-#     has_next_page = True
-#     # 3. Loop through all pages
-#     while has_next_page:
-#         current_page_url = f'https://www.imoti.net/bg/obiavi/r/prodava/sofia/?page={page_number}'#&sid=gSoWpd'
-#         single_page_ads = scrape_single_page(current_page_url)
-        
-#         if not single_page_ads:
-#             has_next_page = False
-#             break
-#         # save all info from current page to the db
-#         try:
-#             for item in single_page_ads:
-#                 insert_ad(cursor, item)
-#         except Exception as e:
-#             print(e)
-        
-#         # commit at the end of each page
-#         conn.commit()
-#         print(f"Saved all items from page {page_number} into the db!")
-#         page_number += 1
-    
-#     # close the connection to the db
-#     conn.close()
-#     return None
-
 def run_harvester():
     '''Extract main ad info from all pages & insert into db'''
     # 1. Connect to DB
-    conn = sqlite3.connect('scraper/data/ads_storage.db')
+    conn = sqlite3.connect(_DB_PATH)
     cursor = conn.cursor() # MUST define this
     
     page_number = 1

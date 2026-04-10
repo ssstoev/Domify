@@ -1,21 +1,6 @@
 import { Listing } from "@/api/api";
 import { MapPin, BedDouble, Bath, Ruler, ExternalLink } from "lucide-react";
 
-// export interface Listing {
-//   id: string;
-//   title: string;
-//   price: number;
-//   currency: string;
-//   location: string;
-//   neighborhood: string;
-//   bedrooms: number;
-//   bathrooms?: number;
-//   area: number;
-//   imageUrl?: string;
-//   url?: string;
-//   tags?: string[];
-// }
-
 interface ListingCardProps {
   listing: Listing;
 }
@@ -30,11 +15,11 @@ const ListingCard = ({ listing }: ListingCardProps) => {
   return (
     <div className="group flex gap-4 rounded-xl border border-border bg-card p-3 transition-shadow hover:shadow-md">
       <div className="relative h-28 w-40 flex-shrink-0 overflow-hidden rounded-lg">
-        {/* <img
+        <img
           src={listing.imageUrl}
-          alt={listing.title}
+          // alt={listing.title}
           className="h-full w-full object-cover transition-transform group-hover:scale-105"
-        /> */}
+        />
       </div>
 
       <div className="flex min-w-0 flex-1 flex-col justify-between">
@@ -43,16 +28,16 @@ const ListingCard = ({ listing }: ListingCardProps) => {
             <h3 className="truncate text-sm font-semibold text-foreground">
               {listing.title}
             </h3>
-            {/* {listing.url && (
+            {listing.link && (
               <a
-                href={listing.url}
+                href={listing.link}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex-shrink-0 text-muted-foreground transition-colors hover:text-primary"
               >
                 <ExternalLink className="h-4 w-4" />
               </a>
-            )} */}
+            )}
           </div>
           <div className="mt-1 flex items-center gap-1 text-xs text-muted-foreground">
             <MapPin className="h-3 w-3" />
