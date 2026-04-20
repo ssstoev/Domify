@@ -123,7 +123,7 @@ def fetch_missing_rows(conn, col_to_check: str, batch_size=20):
     cursor = conn.cursor()
     cursor.execute("BEGIN IMMEDIATE")
     query = f'''
-    SELECT hash_id, link FROM ads_raw WHERE {col_to_check} is NULL LIMIT ?
+    SELECT hash_id, link FROM ads_raw WHERE {col_to_check} IS NULL LIMIT ?
     '''
     cursor.execute(query, (batch_size,))
 

@@ -182,9 +182,10 @@ def backfill_imgurl_column(batch_size=20):
         conn.execute("PRAGMA busy_timeout = 10000")  # 10 second timeout
         
         # get the urls of the empty values
-        print("fetching the batch... ")
+        # print("fetching the batch... ")
         result_list = fetch_missing_rows(conn, "imgUrl")
-        print(f"fetched the hash_ids of the missing cols: {len(result_list)}")
+        # print(f"fetched the hash_ids of the missing cols: {len(result_list)}")
+        print(result_list)
         conn.close()
 
         # if there're no left missing extras
@@ -192,25 +193,27 @@ def backfill_imgurl_column(batch_size=20):
             break
 
         # for each item in the result_list scrape the data and add it to the db
-        try:
-            updates = []
-            for item in result_list:
-                print(f"Scraping info for item {item["hash_id"]}..")
+        updates = []
+        for item in result_list:
+            try:
+                print(f"Scraping info for item {item['link']}..")
                 response = requests.get(item["link"])
-                print(f"Scraped the info for item {item["hash_id"]}")
+                print(f"Scraped the info for item {item['link']}")
 
                 soup = BeautifulSoup(response.content, "html.parser")
-                result = soup.find("img", class_="src")
-
+                result = soup.find("img", {"itemprop": "image"})
+                src = result.get("src") if result else None
+                print("src:", src)
                 update_dict = {
                     "hash_id": item["hash_id"],
-                    "imgUrl": result if result else "EMPTY"
+                    "imgUrl": "https://www.imoti.net" + src if src else "EMPTY"
                     }
-                
                 updates.append(update_dict)
-            print("scraping of batch finished")
-        except Exception as e:
-            print(e)
+            except Exception as e:
+                print(f"error scraping {item.get('hash_id')}: {e}")
+                # still mark as EMPTY so it won't be re-fetched endlessly
+                updates.append({"hash_id": item["hash_id"], "imgUrl": "EMPTY"})
+        print("scraping of batch finished")
 
         if updates:
             # time.sleep(0.5)  # Increase delay to ensure lock is released
@@ -220,7 +223,7 @@ def backfill_imgurl_column(batch_size=20):
             add_missing_col_information(write_conn, "imgUrl", updates, "imgUrl")
             write_conn.close()
         
-        total_updated_count += batch_size
+        total_updated_count += len(updates)
         print(f"updated a total of {total_updated_count} records")
 
     return None

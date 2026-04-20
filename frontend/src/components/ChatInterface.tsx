@@ -18,6 +18,17 @@ const SUGGESTED_QUERIES = [
   "Kаква е средната цена на двустайни апартаменти в София?",
 ];
 
+const sampleListing: Listing = {
+    hash_id: "string",
+    title: "string",
+    total_price_eur: 120000,
+    size_m2: "string",
+    neighbourhood: "string",
+    score: 0.2,
+    imgUrl: "https://www.imoti.net/web/files/obiavi/6217591/main_image/thumb_880x0_wm_4-1.jpg?ver=1776588194",
+    link: "https://www.imoti.net/bg/obiava/prodava/sofia/ovcha-kupel/tristaen/6217591/?sid=it0yuZ&page=1"
+}
+
 const ChatInterface = () => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
@@ -140,12 +151,13 @@ const ChatInterface = () => {
                   )}
                 </p>
                 {message.listings && (
-                  <div className="space-y-2">
+                  <div className="max-h-[60vh] overflow-y-auto space-y-2 pr-1">
                     {message.listings.map((listing) => (
                       <ListingCard key={listing.hash_id} listing={listing} />
                     ))}
                   </div>
-                )}                
+                )}                 
+                {/* <ListingCard key = {sampleListing.hash_id} listing={sampleListing}/> */}
               </div>
             </div>
           ))}
