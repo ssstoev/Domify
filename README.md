@@ -1,4 +1,4 @@
-# Sofia Real Estate Analysis
+# Domify
 
 An AI-powered real estate search platform for the Sofia, Bulgaria property market. Instead of filling out rigid filter forms, users describe what they want in natural language — in Bulgarian — and the system finds the most relevant listings using semantic search.
 
