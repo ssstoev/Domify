@@ -1,5 +1,6 @@
 .env
 backend/datasets/
+backend/exploration/
 
 # Logs
 logs
