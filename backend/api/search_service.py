@@ -1,4 +1,4 @@
-from data_transformation.src.database import fetch_metadata_from_rdbms
+from data_transformation.ads_cleaned_transformation.database import fetch_metadata_from_rdbms
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 from typing import Optional
