@@ -111,7 +111,7 @@ def check_proximity_to_public_transport(row: pd.Series) -> bool:
     return any(kw in string_to_check for kw in TRANSPORT_KEYWORDS)
     
 def check_if_furnished(extras: str) -> bool:
-    return "ОБЗАВЕДЕН" in str(extras).upper()
+    return not ("НЕОБЗАВЕДЕН" in str(extras).upper())
 
 def includes_parking(extras: str) -> bool:
     parking_keywords = ["ПАРКОМЯСТО", "ГАРАЖ"]
