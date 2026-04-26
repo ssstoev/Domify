@@ -143,8 +143,8 @@ def fetch_metadata_from_rdbms(candidate_ids: list):
     placeholders = ",".join(["?"] * len(candidate_ids))
 
     query = f"""
-        SELECT hash_id, link, imgUrl
-        FROM ads_cleaned
+        SELECT hash_id, link, img_url
+        FROM ads_appartments
         WHERE hash_id IN ({placeholders})
     """
 
@@ -154,7 +154,7 @@ def fetch_metadata_from_rdbms(candidate_ids: list):
     sql_data = {
         row[0]: {
             "link": row[1],
-            "imgUrl": row[2]
+            "img_url": row[2]
         }
         for row in rows
     }

@@ -25,7 +25,7 @@ const sampleListing: Listing = {
     size_m2: "string",
     neighbourhood: "string",
     score: 0.2,
-    imgUrl: "https://www.imoti.net/web/files/obiavi/6217591/main_image/thumb_880x0_wm_4-1.jpg?ver=1776588194",
+    img_url: "https://www.imoti.net/web/files/obiavi/6217591/main_image/thumb_880x0_wm_4-1.jpg?ver=1776588194",
     link: "https://www.imoti.net/bg/obiava/prodava/sofia/ovcha-kupel/tristaen/6217591/?sid=it0yuZ&page=1"
 }
 
@@ -93,7 +93,7 @@ const ChatInterface = () => {
           <Building2 className="h-5 w-5 text-primary-foreground" />
         </div>
         <div>
-          <h1 className="text-lg font-semibold text-foreground">ImotQuery</h1>
+          <h1 className="text-lg font-semibold text-foreground">Domify</h1>
           <p className="text-xs text-muted-foreground">
             AI-powered real estate search
           </p>

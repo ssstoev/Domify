@@ -4,7 +4,7 @@ from pydantic import BaseModel
 from typing import Optional
 import traceback
 
-from retrieval.hard_constraints import extract_hard_constraints, filter_db_on_hard_constraints
+from retrieval.hard_constraints import extract_hard_constraints_v1, build_sql_query
 from vector_db.search_embeddings import search_vector_db
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -28,7 +28,7 @@ class Listing(BaseModel):
     hash_id: str
     title: Optional[str] = None
     link: Optional[str] = None
-    imgUrl: Optional[str] = None
+    img_url: Optional[str] = None
     total_price_eur: Optional[float] = None
     size_m2: Optional[str] = None
     neighbourhood: Optional[str] = None
@@ -43,11 +43,11 @@ class SearchResponse(BaseModel):
 async def search(request: SearchRequest):
     try:
         # Step 1: Extract hard constraints from the query
-        constraints = extract_hard_constraints(request.query)
+        constraints = extract_hard_constraints_v1(request.query)
         print(f"Extracted hard constraints: \n {constraints} \n")
 
         # Step 2: Filter RDBMS using hard constraints to get candidate IDs
-        candidate_ids = filter_db_on_hard_constraints(constraints)
+        candidate_ids = build_sql_query(constraints)
         print(f"Found {len(candidate_ids)} results that match the constraints \n")
 
         # WIP: If no candidate_ids are found, return e.g. the most recent ads or some other ones
@@ -87,7 +87,7 @@ async def search(request: SearchRequest):
                 hash_id = r.get("hash_id", ""),
                 title = r.get("Title", ""),
                 link = r.get("link", ""),
-                imgUrl = r.get("imgUrl", ""),
+                img_url = r.get("img_url", ""),
                 total_price_eur = r.get("Price (EUR)") or None,
                 size_m2 = r.get("Size", ""),
                 neighbourhood = r.get("Neighbourhood", ""),
